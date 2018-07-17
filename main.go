@@ -7,6 +7,11 @@ import (
 	"path/filepath"
 	"sync"
 	"text/template"
+
+	"github.com/stretchr/objx"
+
+	"github.com/stretchr/gomniauth"
+	"github.com/stretchr/gomniauth/providers/google"
 )
 
 /// templ represents a single template
@@ -21,12 +26,31 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.once.Do(func() {
 		t.templ = template.Must(template.ParseFiles(filepath.Join("templates", t.filename)))
 	})
-	t.templ.Execute(w, r)
+
+	data := map[string]interface{}{
+		"Host": r.Host,
+	}
+
+	if authCookie, err := r.Cookie("auth"); err == nil {
+		data["UserData"] = objx.MustFromBase64(authCookie.Value)
+	}
+
+	t.templ.Execute(w, data)
 }
 
 func main() {
 	var addr = flag.String("addr", ":8080", "The addr of the application.")
 	flag.Parse() // parse the flags
+
+	// setup gomniauth
+	gomniauth.SetSecurityKey("dhsmkbgt")
+	gomniauth.WithProviders(
+		google.New(
+			"778489302219-eqriptaokq40lvvkt8o39ifab35uiq3o.apps.googleusercontent.com",
+			"Z2fLyCk7sTiWxPK_tqy7EOGE",
+			"http://localhost:8080/auth/callback/google",
+		),
+	)
 
 	r := newRoom()
 	// r.tracer = trace.New(os.Stdout)
