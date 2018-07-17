@@ -1,59 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Chat</title>
-    <style>
-        input { display: block; }
-        ul { list-style: none; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Chat</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <style>
+    /* input { display: block; }
+    ul { list-style: none; } */
+    ul#messages { list-style: none; }
+    ul#messages li { margin-bottom: 2px; }
+    ul#messages li img { margin-right: 10px; }
+  </style>
 </head>
 <body>
-    <ul id="messages"></ul>
-    <form id="chatbox">
-        {{ .UserData.name }}
-        <!-- <textarea name="" id="" cols="30" rows="10"></textarea> -->
-        <input class="input-msg-box" type="text">
-        <input type="submit" value="Send" />
+  <div class="container">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <ul id="messages"></ul>
+      </div>
+    </div>
+    <form id="chatbox" role="form">
+      <div class="form-group">
+        <label for="message">Send a message as {{.UserData.name}}
+          </label> or <a href="/logout">Sign out</a>
+        <!-- <textarea id="message" class="form-control"></textarea> -->
+        <input class="form-control input-msg-box" type="text" id="message">
+      </div>
+      <button class="btn btn-default" type="submit">Send</butto>
     </form>
+  </div>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script>
-        $(function() {
-            var socket = null;
-            var msgBox = $('.input-msg-box');
-            var messages = $('#messages');
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script>
+    $(function() {
+        var socket = null;
+        var msgBox = $('.input-msg-box');
+        var messages = $('#messages');
 
-            $('#chatbox').submit(function() {
-                if (!msgBox.val()) return false;
-                if (!socket) {
-                    alert('Error: There is no socket connection.');
-                    return false;
-                }
+        $('#chatbox').submit(function() {
+          if (!msgBox.val()) return false;
+          if (!socket) {
+              alert('Error: There is no socket connection.');
+              return false;
+          }
 
-                socket.send(JSON.stringify({ "Message": msgBox.val() }))
-                msgBox.val('');
-                return false;
-            });
+          socket.send(JSON.stringify({ "Message": msgBox.val() }))
+          msgBox.val('');
+          return false;
+        });
 
-            if (!window['WebSocket']) {
-                alert('Error: Your browser does not support web sockets.')
-            } else {
-                socket = new WebSocket('ws://{{.Host}}/room');
-                socket.onclose = function () {
-                    console.log('Connection has been closed.');
-                }
-                socket.onmessage = function(e) {
-                    var msg = JSON.parse(e.data)
-                    messages.append($("<li>").append(
-                        $("<strong>").text(msg.Name + ": "),
-                        $("<span>").text(msg.Message)
-                    ));
-                }
-            }
-        })
-    </script>
+        if (!window['WebSocket']) {
+          alert('Error: Your browser does not support web sockets.')
+        } else {
+          socket = new WebSocket('ws://{{.Host}}/room');
+          socket.onclose = function () {
+            console.log('Connection has been closed.');
+          }
+          socket.onmessage = function(e) {
+            var msg = JSON.parse(e.data)
+            messages.append($("<li>").append(
+              $("<li>").append(
+                $("<img>").attr("title", msg.Name).css({
+                  width:50,
+                  verticalAlign:"middle"
+                }).attr("src", msg.AvatarURL),
+                $("<span>").text(msg.Message)
+              )
+            ));
+          }
+        }
+      })
+  </script>
 </body>
 </html>
